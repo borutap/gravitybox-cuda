@@ -11,7 +11,7 @@ __global__ void kernel_update(Particle *particles, glm::mat4 *trans, int n, floa
         return;
     }
     Particle &particle = particles[index];
-    float mass = 1.0f;
+    //float mass = 1.0f;
     glm::vec2 force;
     if (selected_force == Force::gravity)
     {
@@ -29,12 +29,16 @@ __global__ void kernel_update(Particle *particles, glm::mat4 *trans, int n, floa
     {
         force = calculate_outward_force(particle);
     }
+    else if (selected_force == Force::oscillator)
+    {
+        force = calculate_oscillator_force(particle);
+    }
 
     particle.x += dt * particle.vx;
     particle.y += dt * particle.vy;
 
-    particle.vx += dt / mass * force.x;
-    particle.vy += dt / mass * force.y;
+    particle.vx += dt / particle.mass * force.x;
+    particle.vy += dt / particle.mass * force.y;
 
     if (selected_force != Force::gravity)
     {

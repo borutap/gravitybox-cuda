@@ -17,12 +17,19 @@ __device__ __host__ glm::vec2 calculate_outward_force(Particle &particle)
 __device__ __host__ glm::vec2 calculate_circular_force(Particle &particle)
 {
     return glm::vec2(particle.y / 2, -particle.x  / 2);
+    //return glm::vec2(particle.x - particle.x*particle.x*particle.x, -particle.x  / 2);
 }
 
 __device__ __host__ glm::vec2 calculate_gravity_force()
 {
     // -masa * grawitacja
     return glm::vec2(0, -1.0f * 9.81f);
+}
+
+__device__ __host__ glm::vec2 calculate_oscillator_force(Particle &particle)
+{
+    float k = 30.0f;
+    return glm::vec2(-k * particle.x, -k * particle.y);
 }
 
 __device__ __host__ void limit_speed(Particle &particle, float speed_limit)

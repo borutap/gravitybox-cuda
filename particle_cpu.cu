@@ -22,13 +22,6 @@ void keep_within_xy(Particle &particle)
         particle.vy -= turn_factor;
 }
 
-glm::vec2 calculate_oscillator_force(Particle &particle)
-{
-    glm::vec2 r0(0.0f, 0.0f);
-    float k = 1.0f;
-    return glm::vec2(-k * (particle.x - r0.x), -k * (particle.y - r0.y));
-}
-
 // zalozenie k = 1
 float oscilator_particle_energy(Particle &particle)
 {
@@ -47,7 +40,7 @@ void cpu::update(Particle *particles, glm::mat4 *trans, int n, float dt, float t
                  Force selected_force, float speed_limit, float bounce_factor,
                  float walls_ceiling_margin, float turn_factor)
 {
-    float mass = 1.0f;
+    //float mass = 1.0f;
     for (int i = 0; i < n; i++)
     {
         Particle &particle = particles[i];
@@ -69,12 +62,16 @@ void cpu::update(Particle *particles, glm::mat4 *trans, int n, float dt, float t
         {
             force = calculate_outward_force(particle);
         }
+        else if (selected_force == Force::oscillator)
+        {
+            force = calculate_oscillator_force(particle);
+        }
 
         particle.x += dt * particle.vx;
         particle.y += dt * particle.vy;
 
-        particle.vx += dt / mass * force.x;
-        particle.vy += dt / mass * force.y;
+        particle.vx += dt / particle.mass * force.x;
+        particle.vy += dt / particle.mass * force.y;
 
         if (selected_force != Force::gravity)
         {

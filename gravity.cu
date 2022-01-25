@@ -24,7 +24,7 @@ using namespace std;
 // settings
 unsigned int SCR_WIDTH = 1024;
 unsigned int SCR_HEIGHT = 768;
-const int N = 200000;
+const int N = 100000;
 const bool RUN_CPU = false;
 int VERTICES_IN_PARTICLE;
 
@@ -163,6 +163,7 @@ Particle *init_particle_structure(int n, float *vertexData, glm::vec2 *start_tra
     start_speeds = new glm::vec2[n];
     for (int i = 0; i < n; i++)
     {
+        particles[i].mass = glm::linearRand(1.0f, 10.0f);
         particles[i].vx = glm::linearRand(-0.5f, 0.5f);
         particles[i].vy = glm::linearRand(-0.5f, 0.5f);
         // nowe

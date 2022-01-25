@@ -7,6 +7,7 @@ struct Particle
     float y;
     float vx;
     float vy;
+    float mass;
 };
 
 #endif
