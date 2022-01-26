@@ -26,6 +26,8 @@ unsigned int SCR_WIDTH = 1024;
 unsigned int SCR_HEIGHT = 768;
 const int N = 100000;
 const bool RUN_CPU = false;
+const bool RUN_LOGGER = true;
+
 int VERTICES_IN_PARTICLE;
 
 // float vertexData[] = {
@@ -52,6 +54,8 @@ glm::mat4 *trans_matrices;
 
 Particle *d_particles;
 glm::mat4 *d_trans;
+
+Logger *logger = nullptr;
 
 void init_transform_resources();
 void render(SDL_Window* window, Shader* shader);
@@ -88,6 +92,11 @@ Shader* init_resources()
     Shader* shader = new Shader("particle.vs", "particle.fs");
     trans_matrices = new glm::mat4[N];
     start_translations = new glm::vec2[N];
+    if (RUN_LOGGER)
+    {
+        logger = new Logger();   
+        logger->start_timed_measurement("generating starting translations");
+    }
     for (int i = 0; i < N; i++)
     {                
         glm::vec3 translation;
@@ -96,7 +105,10 @@ Shader* init_resources()
         trans_matrices[i] = glm::translate(glm::mat4(1.0f), translation);
         start_translations[i] = translation;
     }
-    
+    if (RUN_LOGGER)
+    {
+        logger->end_timed_measurement();
+    }
     glGenVertexArrays(1, &particleVAO);
     glGenBuffers(1, &particleVBO);
     glBindVertexArray(particleVAO);
@@ -159,6 +171,10 @@ void set_initial_particle_position(Particle &particle, float *vertexData, glm::v
 
 Particle *init_particle_structure(int n, float *vertexData, glm::vec2 *start_translations)
 {
+    if (RUN_LOGGER)
+    {
+        logger->start_timed_measurement("settings particle structures");
+    }
     Particle *particles = new Particle[n];
     start_speeds = new glm::vec2[n];
     for (int i = 0; i < n; i++)
@@ -170,6 +186,10 @@ Particle *init_particle_structure(int n, float *vertexData, glm::vec2 *start_tra
         start_speeds[i] = glm::vec2(particles[i].vx, particles[i].vy);
         //
         set_initial_particle_position(particles[i], vertexData, start_translations[i]);        
+    }
+    if (RUN_LOGGER)
+    {
+        logger->end_timed_measurement();
     }
 
     return particles;
@@ -242,8 +262,21 @@ void main_loop(SDL_Window* window, Shader* shader)
     bool played = false;    
     if (!RUN_CPU)
     {
+        if (RUN_LOGGER)
+        {
+            logger->start_timed_measurement("copying particle structures to device");
+        }
         copy_particle_structure_to_device(&particles, &d_particles, N);
+        if (RUN_LOGGER)
+        {
+            logger->end_timed_measurement();
+            logger->start_timed_measurement("copying translation matrices to device");
+        }
         copy_trans_matrix_to_device(&trans_matrices, &d_trans, N);
+        if (RUN_LOGGER)
+        {
+            logger->end_timed_measurement();
+        }
     }
     dim3 num_threads(1024);
     dim3 num_blocks(N / 1024 + 1);   
@@ -355,10 +388,16 @@ void free_resources(SDL_Window* window, Shader *shader)
     // nowe
     delete[] start_speeds;
     //
-    delete[] vertexData;
-    // cudaFree(d_trans);
-    // cudaFree(d_boids);
+    if (RUN_LOGGER)
+    {
+        logger->close_file();
+        delete logger;
+    }
+    delete[] vertexData;    
+    cudaFree(d_particles);
+    cudaFree(d_trans);
 
+    
     SDL_DestroyWindow(window);
     //Quit SDL subsystems
     SDL_Quit();
