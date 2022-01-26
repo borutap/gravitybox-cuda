@@ -12,7 +12,7 @@ __global__ void kernel_update(Particle *particles, glm::mat4 *trans, int n, floa
     }
     Particle &particle = particles[index];
     //float mass = 1.0f;
-    glm::vec2 force;
+    glm::vec2 force(0.0f, 0.0f);
     if (selected_force == Force::gravity)
     {
         force = calculate_gravity_force();
@@ -20,10 +20,6 @@ __global__ void kernel_update(Particle *particles, glm::mat4 *trans, int n, floa
     else if (selected_force == Force::storm)
     {
         force = calculate_storm_force(particle);
-    }
-    else if (selected_force == Force::circular)
-    {
-        force = calculate_circular_force(particle);
     }
     else if (selected_force == Force::outward)
     {

@@ -25,8 +25,8 @@ void Parameters::print_values()
     cout << "1. Gravity [" << is_force_selected(Force::gravity) << "]" << endl;
     cout << "2. Storm [" << is_force_selected(Force::storm) << "]" << endl;
     cout << "3. Outward [" << is_force_selected(Force::outward) << "]" << endl;    
-    cout << "4. Circular [" << is_force_selected(Force::circular) << "]" << endl;   
-    cout << "5. Oscillator [" << is_force_selected(Force::oscillator) << "]" << endl;  
+    cout << "4. No force [" << is_force_selected(Force::no_force) << "]" << endl;   
+    cout << "5. Oscillator [" << is_force_selected(Force::oscillator) << "]" << endl;     
     cout << "Speed limit = " << speed_limit << " (-q +w) doesn't apply to gravity" <<  endl;
     cout << "Bounce factor = " << bounce_factor << " (-a +s)" <<  endl;
     cout << "Walls and ceiling margin = " << walls_ceiling_margin << " (-z +x)" <<  endl;
@@ -51,7 +51,7 @@ bool Parameters::handle_keyboard(SDL_Event &ev)
         break;
 
         case SDLK_4:
-            selected_force = Force::circular;
+            selected_force = Force::no_force;
         break;
 
         case SDLK_5:

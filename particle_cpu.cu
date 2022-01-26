@@ -45,7 +45,7 @@ void cpu::update(Particle *particles, glm::mat4 *trans, int n, float dt, float t
     {
         Particle &particle = particles[i];
 
-        glm::vec2 force;
+        glm::vec2 force(0.0f, 0.0f);
         if (selected_force == Force::gravity)
         {
             force = calculate_gravity_force();
@@ -53,10 +53,6 @@ void cpu::update(Particle *particles, glm::mat4 *trans, int n, float dt, float t
         else if (selected_force == Force::storm)
         {
             force = calculate_storm_force(particle);
-        }
-        else if (selected_force == Force::circular)
-        {
-            force = calculate_circular_force(particle);
         }
         else if (selected_force == Force::outward)
         {

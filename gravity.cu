@@ -26,7 +26,7 @@ unsigned int SCR_WIDTH = 1024;
 unsigned int SCR_HEIGHT = 768;
 const int N = 100000;
 const bool RUN_CPU = false;
-const bool RUN_LOGGER = true;
+const bool RUN_LOGGER = false;
 
 int VERTICES_IN_PARTICLE;
 
@@ -97,14 +97,8 @@ Shader* init_resources()
         logger = new Logger();   
         logger->start_timed_measurement("generating starting translations");
     }
-    for (int i = 0; i < N; i++)
-    {                
-        glm::vec3 translation;
-        translation.x = glm::linearRand(-1.0f, 1.0f);
-        translation.y = glm::linearRand(-1.0f, 1.0f);
-        trans_matrices[i] = glm::translate(glm::mat4(1.0f), translation);
-        start_translations[i] = translation;
-    }
+    generate_start_translations_circle(trans_matrices, start_translations, 1.0f, N);
+    //generate_start_translations_random(trans_matrices, start_translations, N);    
     if (RUN_LOGGER)
     {
         logger->end_timed_measurement();
@@ -162,11 +156,8 @@ void init_transform_resources()
 
 void set_initial_particle_position(Particle &particle, float *vertexData, glm::vec2 &translation)
 {
-    float origin_x = 0.0f;
-    //float origin_y = (vertexData[11] + vertexData[1]) / 2;
-    float origin_y = 0.0f;
-    particle.x = origin_x + translation.x;
-    particle.y = origin_y + translation.y;    
+    particle.x = translation.x;
+    particle.y = translation.y; 
 }
 
 Particle *init_particle_structure(int n, float *vertexData, glm::vec2 *start_translations)
@@ -181,10 +172,8 @@ Particle *init_particle_structure(int n, float *vertexData, glm::vec2 *start_tra
     {
         particles[i].mass = glm::linearRand(1.0f, 10.0f);
         particles[i].vx = glm::linearRand(-0.5f, 0.5f);
-        particles[i].vy = glm::linearRand(-0.5f, 0.5f);
-        // nowe
-        start_speeds[i] = glm::vec2(particles[i].vx, particles[i].vy);
-        //
+        particles[i].vy = glm::linearRand(-0.5f, 0.5f);        
+        start_speeds[i] = glm::vec2(particles[i].vx, particles[i].vy);        
         set_initial_particle_position(particles[i], vertexData, start_translations[i]);        
     }
     if (RUN_LOGGER)
@@ -195,60 +184,43 @@ Particle *init_particle_structure(int n, float *vertexData, glm::vec2 *start_tra
     return particles;
 }
 
-void keep_within_bounds(Particle *particles, int index,
-                        float margin, float turn_factor)
+void update_shader()
 {
-    Particle &particle = particles[index];
-
-    if (particle.x < -1.0f + margin)
-        particle.vx += turn_factor;    
-
-    if (particle.x > 1.0f - margin)
-        particle.vx -= turn_factor;
-
-    if (particle.y < -1.0f + margin)
-        particle.vy += turn_factor;    
-
-    if (particle.y > 1.0f - margin)
-        particle.vy -= turn_factor;
+    glBindBuffer(GL_ARRAY_BUFFER, transformationVBO);
+    glBufferData(GL_ARRAY_BUFFER, N * sizeof(glm::mat4), &trans_matrices[0], GL_DYNAMIC_DRAW);
+    // glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * index, sizeof(glm::mat4), &matrix);
+    glBindBuffer(GL_ARRAY_BUFFER, 0); 
 }
 
-void limit_speed(Particle *particles, int index, float speed_limit)
+void reset_particle_positions(Particle *particles)
 {
-    Particle &particle = particles[index];
-
-    float speed = glm::sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
-    if (speed <= speed_limit)
-        return;
-    particle.vx = (particle.vx / speed) * speed_limit;
-    particle.vy = (particle.vy / speed) * speed_limit;
-}
-
-void move(Particle *particles, glm::mat4 *trans, int n, float margin, float turn_factor)
-{
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < N; i++)
     {
-        limit_speed(particles, i, 0.005f);
-        keep_within_bounds(particles, i, margin, turn_factor);
-        Particle &particle = particles[i];
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-
-        // float angle = glm::atan(particle.dy / particle.dx);
-        // float pi = glm::pi<float>();
-        // if (particle.dx <= 0)
-        // {
-        //     angle += pi / 2;
-        // }        
-        // else
-        // {
-        //     angle -= pi / 2;
-        // }
-
-        auto transformation = glm::translate(glm::mat4(1.0f), glm::vec3(particle.x, particle.y, 0.0f));
-        // transformation = glm::rotate(transformation, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        trans[i] = transformation;
+        set_initial_particle_position(particles[i], vertexData, start_translations[i]);
+        particles[i].vx = start_speeds[i].x;
+        particles[i].vy = start_speeds[i].y; 
     }
+}
+
+void conditional_update(dim3 &num_blocks, dim3 &num_threads, Particle *particles,
+                        float dt, float time, Parameters &p, bool copy)
+{
+    if (!RUN_CPU)
+    {
+        if (copy)
+        {
+            copy_particle_structure_to_device(&particles, &d_particles, N);
+        }        
+        kernel_update<<<num_blocks, num_threads>>>(d_particles, d_trans, N, dt, time,
+            p.selected_force, p.speed_limit, p.bounce_factor, p.walls_ceiling_margin, p.turn_factor);
+        copy_trans_matrix_to_host(&trans_matrices, &d_trans, N);
+    }
+    else
+    {
+        cpu::update(particles, trans_matrices, N, dt, time,
+            p.selected_force, p.speed_limit, p.bounce_factor, p.walls_ceiling_margin, p.turn_factor);
+    }
+    update_shader();  
 }
 
 void main_loop(SDL_Window* window, Shader* shader)
@@ -302,17 +274,9 @@ void main_loop(SDL_Window* window, Shader* shader)
                 played = !played;                
             }
             else if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_r)
-            {
-                for (int i = 0; i < N; i++)
-                {
-                    set_initial_particle_position(particles[i], vertexData, start_translations[i]);
-                    particles[i].vx = start_speeds[i].x;
-                    particles[i].vy = start_speeds[i].y; 
-                }            
-                if (!RUN_CPU)
-                {
-                    copy_particle_structure_to_device(&particles, &d_particles, N);
-                }
+            {          
+                reset_particle_positions(particles);      
+                conditional_update(num_blocks, num_threads, particles, dt, time, p, true);  
             }
             else if (ev.type == SDL_KEYDOWN && p.handle_keyboard(ev))
             {
@@ -331,23 +295,8 @@ void main_loop(SDL_Window* window, Shader* shader)
             render(window, shader);
             continue;
         }
-        if (RUN_CPU)
-        {
-            cpu::update(particles, trans_matrices, N, dt, time,
-                 p.selected_force, p.speed_limit, p.bounce_factor, p.walls_ceiling_margin, p.turn_factor);
-        }
-        else
-        {
-            kernel_update<<<num_blocks, num_threads>>>(d_particles, d_trans, N, dt, time,
-                 p.selected_force, p.speed_limit, p.bounce_factor, p.walls_ceiling_margin, p.turn_factor);
-            copy_trans_matrix_to_host(&trans_matrices, &d_trans, N);
-        }
         
-
-        glBindBuffer(GL_ARRAY_BUFFER, transformationVBO);
-        glBufferData(GL_ARRAY_BUFFER, N * sizeof(glm::mat4), &trans_matrices[0], GL_DYNAMIC_DRAW);
-        // glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * index, sizeof(glm::mat4), &matrix);
-        glBindBuffer(GL_ARRAY_BUFFER, 0); 
+        conditional_update(num_blocks, num_threads, particles, dt, time, p, false);
 
         render(window, shader);
         time += 1.0f / 144.0f;
@@ -384,10 +333,8 @@ void free_resources(SDL_Window* window, Shader *shader)
     glDeleteBuffers(1, &transformationVBO);
     delete shader;
     delete[] trans_matrices;
-    delete[] start_translations;
-    // nowe
+    delete[] start_translations;    
     delete[] start_speeds;
-    //
     if (RUN_LOGGER)
     {
         logger->close_file();

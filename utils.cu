@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/random.hpp"
 #include <iomanip>
 #include <ctime>
 #include <sstream>
@@ -57,4 +59,44 @@ std::vector<float> get_circle_points(float radius, float step_size)
         t += step_size;
     }
     return ret;
+}
+
+float calc_radius(int k, int n, int b)
+{
+    if (k > n - b)
+    {
+        return 1.0f;
+    }
+    return sqrt(k - 0.5f) / sqrt(n - (b+1) / 2.0f);
+}
+
+void generate_start_translations_circle(glm::mat4 *in_trans_matrices, glm::vec2 *in_start_translations,
+                                        float radius, int n)
+{
+    // generowanie funkcja sunflower
+    float alpha = 2.0f;
+    int b = glm::round(alpha * glm::sqrt(n));
+    float phi = (glm::sqrt(5)+1) / 2.0f; // golden ratio
+    for (int k = 1; k <= n; k++)
+    {
+        float r = calc_radius(k, n, b);
+        float theta = 2 * glm::pi<float>() * k / glm::pow(phi, 2);
+        glm::vec3 translation;
+        translation.x = r * glm::cos(theta);
+        translation.y = r * glm::sin(theta);
+        in_trans_matrices[k - 1] = glm::translate(glm::mat4(1.0f), translation);
+        in_start_translations[k - 1] = translation;
+    }
+}
+
+void generate_start_translations_random(glm::mat4 *in_trans_matrices, glm::vec2 *in_start_translations, int n)
+{
+    for (int i = 0; i < n; i++)
+    {                
+        glm::vec3 translation;
+        translation.x = glm::linearRand(-1.0f, 1.0f);
+        translation.y = glm::linearRand(-1.0f, 1.0f);
+        in_trans_matrices[i] = glm::translate(glm::mat4(1.0f), translation);
+        in_start_translations[i] = translation;
+    }
 }

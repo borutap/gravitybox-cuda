@@ -13,13 +13,6 @@ __device__ __host__ glm::vec2 calculate_outward_force(Particle &particle)
     return glm::vec2(4*particle.x*particle.y*particle.y, 4*particle.x*particle.x*particle.y);
 }
 
-// rotacyjne
-__device__ __host__ glm::vec2 calculate_circular_force(Particle &particle)
-{
-    return glm::vec2(particle.y / 2, -particle.x  / 2);
-    //return glm::vec2(particle.x - particle.x*particle.x*particle.x, -particle.x  / 2);
-}
-
 __device__ __host__ glm::vec2 calculate_gravity_force()
 {
     // -masa * grawitacja
