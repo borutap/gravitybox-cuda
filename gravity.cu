@@ -6,10 +6,10 @@
 
 #include "learnopengl/shader.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/random.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/random.hpp"
 
 #include <iostream>
 #include "particle.h"
@@ -30,26 +30,12 @@ const bool RUN_LOGGER = false;
 
 int VERTICES_IN_PARTICLE;
 
-// float vertexData[] = {
-//     // positions  // colors
-//     0.005f, 0.0f, 1.0f, 1.0f, 0.0f,
-//     0.0038242109364224424f, 0.003221088436188455f, 1.0f, 1.0f, 0.0f,
-//     0.0008498357145012052f, 0.004927248649942301f, 1.0f, 1.0f, 0.0f,
-//     -0.0025242305229992855f, 0.00431604683324437f, 1.0f, 1.0f, 0.0f,
-//     -0.00471111170334329f, 0.0016749407507795256f, 1.0f, 1.0f, 0.0f,
-//     -0.004682283436453982f, -0.0017539161384480992f, 1.0f, 1.0f, 0.0f,
-//     -0.0024513041067034972f, -0.004357878862067941f, 1.0f, 1.0f, 0.0f,
-//     0.0009325618471128788f, -0.0049122630631216625f, 1.0f, 1.0f, 0.0f,
-//     0.003877829392551251f, -0.0031563331893616044f, 1.0f, 1.0f, 0.0f,
-// };
 float *vertexData;
 
 GLuint particleVAO, particleVBO;
 GLuint transformationVBO;
 glm::vec2 *start_translations;
-// nowe
 glm::vec2 *start_speeds;
-//
 glm::mat4 *trans_matrices;
 
 Particle *d_particles;
@@ -98,7 +84,6 @@ Shader* init_resources()
         logger->start_timed_measurement("generating starting translations");
     }
     generate_start_translations_circle(trans_matrices, start_translations, 1.0f, N);
-    //generate_start_translations_random(trans_matrices, start_translations, N);    
     if (RUN_LOGGER)
     {
         logger->end_timed_measurement();
@@ -108,19 +93,19 @@ Shader* init_resources()
     glBindVertexArray(particleVAO);
     glBindBuffer(GL_ARRAY_BUFFER, particleVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * VERTICES_IN_PARTICLE * 5, vertexData, GL_STATIC_DRAW);
-    // wspolne dane
+    // shared data
     glEnableVertexAttribArray(0);
-    // pozycja
+    // position
     glVertexAttribPointer(
-        0,                  // nr atrybutu - zgodny z layoutem w .vs
-        2,                  // rozmiar
-        GL_FLOAT,           // typ
-        GL_FALSE,           // czy znormalizowane
-        5 * sizeof(float),  // stride - odstep do kolejnej wartosci
-        (void*)0            // offset jezeli jest we wspolnej tablicy
+        0,                  // attribute number - corresponding to layout in .vs
+        2,                  // size
+        GL_FLOAT,           // type
+        GL_FALSE,           // is normalized
+        5 * sizeof(float),  // stride
+        (void*)0            // offset
     );
     glEnableVertexAttribArray(1);
-    // kolor
+    // color
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
     
     init_transform_resources();
@@ -130,7 +115,7 @@ Shader* init_resources()
 
 void init_transform_resources()
 {    
-    // kazda czastka ma swoja macierz transformacji
+    // each particles has it's own transformation matrix
     glGenBuffers(1, &transformationVBO);
     glBindBuffer(GL_ARRAY_BUFFER, transformationVBO);
     glBufferData(GL_ARRAY_BUFFER, N * sizeof(glm::mat4), &trans_matrices[0], GL_DYNAMIC_DRAW);
@@ -319,7 +304,7 @@ void render(SDL_Window* window, Shader* shader)
     // draw N instanced particles 
     (*shader).use();
     glBindVertexArray(particleVAO);
-    // N czasteczek po VERTEX_IN_PARTICLE wierzcholkow
+    // N particles with VERTICES_IN_PARTICLE vertices
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, VERTICES_IN_PARTICLE, N);
     glBindVertexArray(0); // zrywa binding
 
@@ -378,7 +363,7 @@ int main()
     //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
-    //SDL_GL_SetSwapInterval(0); // wylacza vsync
+    SDL_GL_SetSwapInterval(0); // wylacza vsync
     if (SDL_GL_CreateContext(window) == NULL)
     {
         cerr << "Error: SDL_GL_CreateContext: " << SDL_GetError() << endl;

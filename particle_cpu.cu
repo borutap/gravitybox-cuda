@@ -22,7 +22,7 @@ void keep_within_xy(Particle &particle)
         particle.vy -= turn_factor;
 }
 
-// zalozenie k = 1
+// assume k = 1
 float oscilator_particle_energy(Particle &particle)
 {
     float energy = particle.vx * particle.vx / 2;
@@ -40,7 +40,6 @@ void cpu::update(Particle *particles, glm::mat4 *trans, int n, float dt, float t
                  Force selected_force, float speed_limit, float bounce_factor,
                  float walls_ceiling_margin, float turn_factor)
 {
-    //float mass = 1.0f;
     for (int i = 0; i < n; i++)
     {
         Particle &particle = particles[i];

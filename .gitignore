@@ -1,3 +1,5 @@
 gravity
 *.o
 *.csv
+demo.txt
+.vscode

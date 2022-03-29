@@ -1,13 +1,11 @@
 #include "particle_common.h"
 
-// sztorm
 __device__ __host__ glm::vec2 calculate_storm_force(Particle &particle)
 {
     return glm::vec2(50*particle.y/(particle.x*particle.x+particle.y*particle.y),
                     -50*particle.x/(particle.x*particle.x+particle.y*particle.y));
 }
 
-// do zewnatrz
 __device__ __host__ glm::vec2 calculate_outward_force(Particle &particle)
 {
     return glm::vec2(4*particle.x*particle.y*particle.y, 4*particle.x*particle.x*particle.y);
@@ -15,7 +13,7 @@ __device__ __host__ glm::vec2 calculate_outward_force(Particle &particle)
 
 __device__ __host__ glm::vec2 calculate_gravity_force()
 {
-    // -masa * grawitacja
+    // -mass * gravity
     return glm::vec2(0, -1.0f * 9.81f);
 }
 
@@ -39,7 +37,7 @@ __device__ __host__ void bounce_off_ground(Particle &particle, float bounce_fact
     if (particle.y >= -1.0f || particle.vy >= 0.0f)
         return;
 
-    //particle.y = -1; // wyrownuje do jednej linii odbite
+    //particle.y = -1; // match bounced particles to same height
     particle.vy *= -bounce_factor;
     //apply_damping_forces(particle, 0.9f);
 }

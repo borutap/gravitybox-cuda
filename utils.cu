@@ -47,7 +47,7 @@ std::string Logger::format_time(std::chrono::_V2::system_clock::time_point &t)
     return std::ctime(&in_time_t);
 }
 
-// zwracamy kolejne x,y punktow tworzacych okrag
+// returning x, y coordinates making a circle
 std::vector<float> get_circle_points(float radius, float step_size)
 {
     std::vector<float> ret;
@@ -73,7 +73,7 @@ float calc_radius(int k, int n, int b)
 void generate_start_translations_circle(glm::mat4 *in_trans_matrices, glm::vec2 *in_start_translations,
                                         float radius, int n)
 {
-    // generowanie funkcja sunflower
+    // sunflower generating function
     float alpha = 2.0f;
     int b = glm::round(alpha * glm::sqrt(n));
     float phi = (glm::sqrt(5)+1) / 2.0f; // golden ratio

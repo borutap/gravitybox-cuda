@@ -7,7 +7,7 @@ void Parameters::set_default()
 {
     selected_force = Force::storm;
     speed_limit = 2.0f;
-    bounce_factor = 0.9f;
+    bounce_factor = 0.7f;
     walls_ceiling_margin = 0.02f;
     turn_factor = 0.35f;
 }

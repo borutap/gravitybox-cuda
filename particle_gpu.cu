@@ -11,7 +11,6 @@ __global__ void kernel_update(Particle *particles, glm::mat4 *trans, int n, floa
         return;
     }
     Particle &particle = particles[index];
-    //float mass = 1.0f;
     glm::vec2 force(0.0f, 0.0f);
     if (selected_force == Force::gravity)
     {

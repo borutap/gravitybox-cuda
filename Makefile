@@ -1,13 +1,14 @@
-LDLIBS=-lglut -lGLEW -lGL -lSDL2
+LDLIBS=-lGLEW -lGL -lSDL2
 all: gravity
 
 utils.o: utils.cu
 	nvcc -c utils.cu -Xcudafe --diag_suppress=20012
 
+# diag_suppress=20012 suppresses warning from glm library
 parameters.o: parameters.cu
 	nvcc -c parameters.cu -Xcudafe --diag_suppress=20012
 
-# dzieki fladze dc mozna uzywac funkcji cuda z innego pliku
+# thanks to -dc flag we can use functions from other files
 particle_common.o: particle_common.cu
 	nvcc -dc -c particle_common.cu -Xcudafe --diag_suppress=20012
 
